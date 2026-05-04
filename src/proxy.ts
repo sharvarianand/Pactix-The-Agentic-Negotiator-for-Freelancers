@@ -9,7 +9,7 @@ const PROTECTED_PREFIXES = [
   "/settings",
 ];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const session = request.cookies.get("pactix_session")?.value;
   const { pathname } = request.nextUrl;
 
