@@ -196,8 +196,8 @@ function Hero() {
 
 /* Animated Council Visual — circular spoke layout */
 const CX = 50; // center x
-const CY = 46; // center y (slightly above mid to leave room for ticker)
-const R  = 34; // orbit radius
+const CY = 45; // center y (slightly above mid to leave room for ticker)
+const R  = 26; // orbit radius
 
 // Judge at center; 5 agents evenly on orbit starting top
 const SPOKE_AGENTS = [
@@ -215,7 +215,7 @@ function nodeXY(angle: number, r = R) {
 
 function CouncilVisual() {
   return (
-    <div className="relative w-full aspect-square border border-[var(--color-border)] bg-[var(--color-panel)] overflow-hidden">
+    <div className="relative w-full aspect-square rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] border border-[var(--color-border)] bg-[var(--color-panel)] overflow-hidden">
       {/* Corner labels */}
       <div className="absolute top-3 left-3 font-mono text-[9px] tracking-widest text-[var(--color-text-muted)] uppercase">
         Council · Live
@@ -284,7 +284,7 @@ function CouncilVisual() {
         {/* Outer nodes */}
         {SPOKE_AGENTS.map((ag, i) => {
           const { x, y } = nodeXY(ag.angle);
-          const labelPos = nodeXY(ag.angle, R + 11);
+          const labelPos = nodeXY(ag.angle, R + 9);
           return (
             <motion.g key={`node-${i}`}
               initial={{ opacity: 0, scale: 0 }}
@@ -295,14 +295,14 @@ function CouncilVisual() {
               {/* pulse ring */}
               {ag.accent && (
                 <motion.circle
-                  cx={x} cy={y} r={6.5}
+                  cx={x} cy={y} r={5.5}
                   fill="none" stroke="#ff1a00" strokeWidth="0.4"
-                  animate={{ r: [5.5, 8, 5.5], opacity: [0.6, 0, 0.6] }}
+                  animate={{ r: [4.5, 7, 4.5], opacity: [0.6, 0, 0.6] }}
                   transition={{ duration: 2.2, repeat: Infinity, delay: i * 0.4 }}
                 />
               )}
               <circle
-                cx={x} cy={y} r={ag.accent ? 4.5 : 3.5}
+                cx={x} cy={y} r={ag.accent ? 3.5 : 2.5}
                 fill={ag.accent ? "#ff1a00" : "#ffffff"}
                 stroke={ag.accent ? "#ff1a00" : "#0a0a0a"}
                 strokeWidth="0.8"
@@ -329,20 +329,20 @@ function CouncilVisual() {
           style={{ transformOrigin: `${CX}px ${CY}px` }}
         >
           <motion.circle
-            cx={CX} cy={CY} r={9}
+            cx={CX} cy={CY} r={8}
             fill="none" stroke="#b8960c" strokeWidth="0.5"
-            animate={{ r: [8, 11, 8], opacity: [0.5, 0, 0.5] }}
+            animate={{ r: [7, 10, 7], opacity: [0.5, 0, 0.5] }}
             transition={{ duration: 3, repeat: Infinity }}
           />
-          <circle cx={CX} cy={CY} r={6.5} fill="#0a0a0a" stroke="#0a0a0a" strokeWidth="0.5" />
+          <circle cx={CX} cy={CY} r={5.5} fill="#0a0a0a" stroke="#0a0a0a" strokeWidth="0.5" />
           <text
-            x={CX} y={CY + 1.5}
-            textAnchor="middle" fontSize="3.8" fill="#ffffff" fontWeight="bold"
+            x={CX} y={CY + 1.2}
+            textAnchor="middle" fontSize="3.2" fill="#ffffff" fontWeight="bold"
           >
             J
           </text>
           <motion.text
-            x={CX} y={CY + 11}
+            x={CX} y={CY + 10}
             textAnchor="middle" fontSize="3.2" fill="#b8960c" letterSpacing="0.4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
