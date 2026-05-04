@@ -284,13 +284,27 @@ function CouncilVisual() {
         {/* Outer nodes */}
         {SPOKE_AGENTS.map((ag, i) => {
           const { x, y } = nodeXY(ag.angle);
-          const labelPos = nodeXY(ag.angle, R + 9);
+          const rad = (ag.angle * Math.PI) / 180;
+          const labelPos = nodeXY(ag.angle, R + 7);
+          
+          let anchor = "middle";
+          if (Math.cos(rad) > 0.1) anchor = "start";
+          else if (Math.cos(rad) < -0.1) anchor = "end";
+          
+          // For top node (-90), bump it up slightly since it's "middle" anchored
+          if (Math.abs(Math.cos(rad)) <= 0.1) labelPos.y -= 2;
+
           return (
             <motion.g key={`node-${i}`}
               initial={{ opacity: 0, scale: 0 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.4, delay: 0.7 + i * 0.12 }}
-              style={{ transformOrigin: `${x}px ${y}px` }}
+              style={{ transformOrigin: `${x}px ${y}px`, cursor: "grab" }}
+              drag
+              dragSnapToOrigin
+              dragElastic={0.6}
+              dragConstraints={{ top: 0, right: 0, bottom: 0, left: 0 }}
+              whileDrag={{ scale: 1.2, cursor: "grabbing" }}
             >
               {/* pulse ring */}
               {ag.accent && (
@@ -309,7 +323,7 @@ function CouncilVisual() {
               />
               <motion.text
                 x={labelPos.x} y={labelPos.y + 1.2}
-                textAnchor="middle" fontSize="3.2"
+                textAnchor={anchor as "start" | "middle" | "end"} fontSize="3.2"
                 fill={ag.accent ? "#ff1a00" : "#737373"}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -326,7 +340,12 @@ function CouncilVisual() {
           initial={{ opacity: 0, scale: 0 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 1.4 }}
-          style={{ transformOrigin: `${CX}px ${CY}px` }}
+          style={{ transformOrigin: `${CX}px ${CY}px`, cursor: "grab" }}
+          drag
+          dragSnapToOrigin
+          dragElastic={0.4}
+          dragConstraints={{ top: 0, right: 0, bottom: 0, left: 0 }}
+          whileDrag={{ scale: 1.15, cursor: "grabbing" }}
         >
           <motion.circle
             cx={CX} cy={CY} r={8}
