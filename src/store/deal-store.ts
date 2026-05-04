@@ -147,12 +147,22 @@ export const useDealStore = create<State>((set, get) => ({
   openApproveReply: (draft) => set({ approveReplyOpen: true, approveReplyDraft: draft }),
 
   loadDeals: async () => {
-    const res = await fetch("/api/deals");
-    const data = await res.json();
-    set((s) => ({
-      deals: data.deals,
-      selectedDealId: s.selectedDealId ?? data.deals[0]?.id ?? null,
-    }));
+    try {
+      const res = await fetch("/api/deals");
+      const data = await res.json();
+      
+      if (!res.ok) {
+        console.error("Backend Error:", data.error);
+        return;
+      }
+      
+      set((s) => ({
+        deals: data.deals || [],
+        selectedDealId: s.selectedDealId ?? data.deals?.[0]?.id ?? null,
+      }));
+    } catch (err) {
+      console.error("Failed to load deals:", err);
+    }
   },
 
   selectDeal: (id) => {

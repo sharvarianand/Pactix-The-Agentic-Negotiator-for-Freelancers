@@ -44,7 +44,7 @@ export default function LoginPage() {
         clearInterval(interval);
         setSessionAndGo();
       }
-    }, 320);
+    }, 120);
   }
 
   return (
