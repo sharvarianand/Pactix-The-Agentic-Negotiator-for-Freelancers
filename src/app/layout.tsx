@@ -3,6 +3,8 @@ import { Inter, JetBrains_Mono, Instrument_Serif } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 
+import { CustomCursor } from "@/components/shell/CustomCursor";
+
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
@@ -37,6 +39,7 @@ export default function RootLayout({
       className={`${inter.variable} ${mono.variable} ${serif.variable}`}
     >
       <body className="antialiased">
+        <CustomCursor />
         {children}
         <Toaster
           position="bottom-right"
