@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://via.placeholder.com/150x150.png?text=Pactix+Logo" width="120" height="120" alt="Pactix Logo" />
+  <img src="./public/logo.png" width="120" height="120" alt="Pactix Logo" style="border-radius: 20%" />
 </p>
 
 <h1 align="center">Pactix</h1>
@@ -26,7 +26,7 @@ Freelancers lose thousands of dollars every year under-pricing themselves, accep
 
 ---
 
-## ✨ Features (The "Grand Prize" Suite)
+## ✨ Features
 
 ### 1. 🤖 The Council of Agents
 Pactix doesn't rely on a single LLM prompt. It uses a multi-agent orchestration architecture:
@@ -149,4 +149,4 @@ Pactix is optimized for Vercel Serverless deployments.
 
 
 ## ⚖️ License
-MIT License - See LICENSE for details.
+[MIT License](https://opensource.org/licenses/MIT) - See [LICENSE](LICENSE) for details.
