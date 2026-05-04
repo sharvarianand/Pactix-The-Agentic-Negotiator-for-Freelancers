@@ -10,7 +10,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Status-Production_Ready-black?style=for-the-badge" alt="Production Ready" />
-  <img src="https://img.shields.io/badge/Framework-Next.js_15-black?style=for-the-badge&logo=next.js" alt="Next.js" />
+  <img src="https://img.shields.io/badge/Framework-Next.js_16-black?style=for-the-badge&logo=next.js" alt="Next.js" />
   <img src="https://img.shields.io/badge/Database-Supabase-black?style=for-the-badge&logo=supabase" alt="Supabase" />
 </p>
 
