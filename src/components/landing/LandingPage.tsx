@@ -31,7 +31,7 @@ function Nav() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-[var(--color-bg)] border-b border-[var(--color-border)]">
       <div className="mx-auto max-w-[1400px] px-6 h-14 flex items-center gap-6">
-        <PactixLogo href="/" size="sm" />
+        <PactixLogo href="/" size="lg" />
 
         {/* divider */}
         <div className="w-px h-5 bg-[var(--color-border-strong)] hidden md:block" />

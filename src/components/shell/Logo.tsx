@@ -29,37 +29,13 @@ export function PactixMark({
   const half = sw / 2;
 
   return (
-    <svg
+    <img
+      src="/logo.png"
+      alt="Pactix Mark"
       width={d}
       height={d}
-      viewBox="0 0 32 32"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-label="Pactix"
-    >
-      {/* outer border */}
-      <rect
-        x={half} y={half}
-        width={32 - sw} height={32 - sw}
-        stroke={color}
-        strokeWidth={sw}
-        fill="none"
-      />
-      {/* signal red stamp — top-right corner */}
-      <rect x="19" y="0" width="13" height="13" fill="#ff1a00" />
-
-      {/* P letterform — stem + bowl */}
-      <line x1="8" y1="8" x2="8" y2="25"
-        stroke={color} strokeWidth={sw + 0.5} strokeLinecap="square" />
-      <path
-        d="M8 8 L15 8 Q21 8 21 14 Q21 20 15 20 L8 20"
-        stroke={color}
-        strokeWidth={sw + 0.2}
-        strokeLinecap="square"
-        strokeLinejoin="miter"
-        fill="none"
-      />
-    </svg>
+      style={{ display: "block", objectFit: "contain" }}
+    />
   );
 }
 
@@ -86,6 +62,7 @@ export function PactixLogo({
             fontFamily: "var(--font-display)",
             letterSpacing: "-0.025em",
             lineHeight: 1,
+            fontWeight: "bold",
             color,
           }}
           className={TEXT_SIZE[size]}

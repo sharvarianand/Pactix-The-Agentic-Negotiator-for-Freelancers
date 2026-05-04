@@ -40,7 +40,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <aside className="w-[220px] shrink-0 flex flex-col border-r border-[var(--color-border)] bg-[var(--color-panel)]">
         {/* Logo */}
         <div className="h-14 px-5 flex items-center justify-between border-b border-[var(--color-border)]">
-          <PactixLogo href="/" size="xs" />
+          <PactixLogo href="/" size="lg" />
           <CommandPalette />
         </div>
 
