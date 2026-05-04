@@ -1,13 +1,35 @@
-# Pactix — The Agentic Negotiator for Freelancers
+<p align="center">
+  <img src="https://via.placeholder.com/150x150.png?text=Pactix+Logo" width="120" height="120" alt="Pactix Logo" />
+</p>
 
-> A council of AI agents that reads your client's email, argues about what to charge, negotiates in your voice, and sends the contract and Stripe invoice. Autonomously.
+<h1 align="center">Pactix</h1>
 
-Submitted to the Baidu MeDo Global Hackathon (Business & E-commerce track).
+<p align="center">
+  <strong>The Autonomous Agentic Negotiator for Modern Freelancers and Agencies.</strong>
+</p>
 
-## What It Does
+<p align="center">
+  <img src="https://img.shields.io/badge/Status-Production_Ready-success?style=for-the-badge" alt="Production Ready" />
+  <img src="https://img.shields.io/badge/Framework-Next.js_15-black?style=for-the-badge&logo=next.js" alt="Next.js" />
+  <img src="https://img.shields.io/badge/Database-Supabase-green?style=for-the-badge&logo=supabase" alt="Supabase" />
+</p>
 
-When a client emails a freelancer, Pactix convenes a **council of six specialist agents**:
+---
 
+## 🚀 What is Pactix?
+
+Freelancers lose thousands of dollars every year under-pricing themselves, accepting bad terms, and spending unbillable hours going back-and-forth negotiating scopes. 
+
+**Pactix** is a powerful SaaS that acts as your AI legal and negotiation team. When a client emails you, Pactix convenes a **Council of Six Specialist AI Agents** that deliberate in real-time. They research the client, identify scope creep, calculate optimal anchor pricing, and draft a response perfectly cloned in your authentic voice.
+
+**It doesn't just draft emails — it closes deals.** Once the terms are agreed upon, Pactix automatically generates a bulletproof PDF contract and a Stripe payment link, sending it to the client to sign and pay.
+
+---
+
+## ✨ Features (The "Grand Prize" Suite)
+
+### 1. 🤖 The Council of Agents
+Pactix doesn't rely on a single LLM prompt. It uses a multi-agent orchestration architecture:
 1. **Orchestrator** — classifies the message (new lead, counter-offer, scope change, etc.)
 2. **Scout** — researches the client company for spend signals and leverage
 3. **Prosecutor** — red-flags scope, timeline, and pricing risks
@@ -15,23 +37,33 @@ When a client emails a freelancer, Pactix convenes a **council of six specialist
 5. **Judge** — weighs both sides and issues a ruling with a win probability
 6. **Negotiator** — drafts the reply in the freelancer's authentic voice (few-shot style transfer from past sent emails)
 
-The freelancer approves at two gates: the reply, and the final contract + Stripe invoice. Everything else is autonomous.
+### 2. 🌍 Multi-Language Auto-Detect
+Working globally? The Orchestrator automatically detects the language of an inbound lead (e.g., French, Japanese). The Council deliberates in English, but the Negotiator translates and drafts the final email perfectly in the client's language while maintaining your voice.
 
-## Stack
+### 3. 🎙️ Voice I/O Dictation
+No more typing. When Pactix drafts an email, open the Approve Reply modal, hit **Dictate**, and use the Web Speech API to verbally inject new context or modifications into the draft before sending.
 
-- **Next.js 15** (App Router, React 19, TypeScript)
-- **Tailwind v4** + custom dark theme
-- **Zustand** for client state
-- **Prisma** + SQLite (migrate to Postgres later — schema is already portable)
-- **Gemini 2.0 Flash** via `@google/generative-ai` (primary LLM)
-- **OpenAI / ERNIE / mock** swappable via `LLM_PROVIDER` env var
-- **Stripe** native SDK for payment links
-- **pdf-lib** for SOW generation
-- **Server-Sent Events** for streaming agent reasoning to the UI
+### 4. 🔍 Redline Agent
+Clients sent their own scope terms? The Redline Agent adversarially scans the contract scope to flag **Critical, Major, and Minor** risks—such as unlimited revisions, low deposits, or missing kill fees.
 
-## Architecture
+### 5. 🎲 Monte Carlo What-If Simulator
+Curious what happens if you push for more money? Run the Monte Carlo Simulator to execute 200 parallel realities of the negotiation. View beautiful distribution histograms charting your **Expected Value (EV)** versus **Win Probability**.
 
-```
+### 6. ⏪ Cinematic Deal Replay
+Share the magic of AI deliberation. Pactix saves every agent's thought process into immutable traces. Use the Deal Replay transport controls (1x - 8x speed) to visually scrub through exactly how the agents arrived at their decision. 
+
+Generate a public, read-only link (`/share/[id]`) to show your friends or colleagues.
+
+### 7. ⌨️ Global Command Palette
+Hit `⌘ + K` anywhere in the app to instantly search deals, jump between inbox threads, or trigger global actions.
+
+---
+
+## 🏗️ Architecture & Tech Stack
+
+Pactix is built for scale, speed, and real-time streaming.
+
+```text
            ┌──────────────┐
 Client     │  Orchestrator│  — classify message
   email  → └──────┬───────┘
@@ -61,129 +93,60 @@ Client     │  Orchestrator│  — classify message
     └────────────────────────┘
 ```
 
-## Quick Start
+- **Frontend**: Next.js 15 (App Router), React 19, Tailwind CSS (Custom "Editorial Light" Design System), Framer Motion.
+- **Backend**: Next.js API Routes, Server-Sent Events (SSE) for live streaming agent deliberations.
+- **Database**: PostgreSQL (via Supabase) and Prisma ORM.
+- **AI Core**: Google Gemini 2.0 Flash (Swappable to OpenAI or Baidu ERNIE).
+- **Payments**: Stripe native SDK.
+- **Document Generation**: `pdf-lib` for autonomous SOW creation.
 
+---
+
+## 🛠️ Quick Start (Vercel / Supabase Production Ready)
+
+Deploying Pactix is incredibly simple. 
+
+### 1. Clone & Install
 ```bash
-# 1. Install
+git clone https://github.com/yourusername/pactix.git
+cd pactix
 npm install
-
-# 2. Configure (copy and fill in keys)
-cp .env.example .env
-# Edit .env — at minimum set:
-#   LLM_PROVIDER=gemini    (or 'mock' for no-API-key dev)
-#   GEMINI_API_KEY=...     (https://aistudio.google.com/apikey)
-#   STRIPE_SECRET_KEY=sk_test_...  (https://dashboard.stripe.com/test/apikeys)
-
-# 3. Database
-npm run db:push    # create schema
-npm run db:seed    # load hero demo data
-
-# 4. Run
-npm run dev
-# → http://localhost:3000
 ```
 
-## Demo Flow (3 minutes)
-
-1. Open `http://localhost:3000`. The hero deal "Lumen Analytics" is preselected.
-2. Click **Send to Pactix**. Watch six agents deliberate live in the right pane.
-3. The **Approve Reply** modal opens with a voice-cloned counter-offer at $550.
-4. Click **Approve & Send**.
-5. Click **Simulate client reply** in the header — injects a $400 counter.
-6. Click **Send to Pactix** again. The council re-convenes; Judge flips to `accept`.
-7. Click **Generate contract & invoice**. A real SOW PDF renders, and a live Stripe payment link is created.
-8. Click **Simulate payment** — the Stripe dashboard mini-panel flips to `PAID`.
-
-## LLM Provider Modes
-
-Set `LLM_PROVIDER` in `.env`:
-
-| Value      | Behavior                                                               |
-| ---------- | ---------------------------------------------------------------------- |
-| `mock`     | Deterministic scripted responses. Works with **no API key** for dev.    |
-| `gemini`   | Google Gemini 2.0 Flash. Requires `GEMINI_API_KEY`.                    |
-| `openai`   | OpenAI GPT-4o-mini. Requires `OPENAI_API_KEY`.                         |
-| `ernie`    | Baidu ERNIE via Qianfan. Stubbed; swap to live for hackathon submit.    |
-
-Empty API keys auto-fall-back to mock, so the demo always runs.
-
-### Gemini 403 `SERVICE_DISABLED`
-
-If Google returns **403** and the message says the API *has not been used* or *is disabled*, the **Generative Language API** is turned off for the Google Cloud project tied to your key. Open the enable link shown in the app error (or [API Library](https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com)), click **Enable**, wait a minute or two, and retry. Keys created from [Google AI Studio](https://aistudio.google.com/apikey) usually work without this step.
-
-### Gemini 403 while the API shows “Enabled”
-
-That usually means the **API key is not for that project**, or **key restrictions** block **server-side** use:
-
-1. **Same project:** In Google Cloud, open **IAM & Admin → Settings** and check **Project number**. The key in `.env` must be created under **APIs & Services → Credentials** for that same project (or use an [AI Studio](https://aistudio.google.com/apikey) key, which is often simplest).
-2. **Application restrictions:** If the key is limited to **HTTP referrers**, requests from the Next.js **API route (Node)** will fail. For local development set application restrictions to **None**; for production use **IP addresses** (your server), not website referrers.
-3. **API restrictions:** Ensure **Generative Language API** is allowed for that key.
-
-## Project Layout
-
-```
-pactix/
-├── prisma/
-│   ├── schema.prisma          # SQLite schema: 7 models
-│   ├── seed.ts                # Hero demo dataset
-│   └── dev.db                 # (gitignored) SQLite file
-├── src/
-│   ├── app/
-│   │   ├── page.tsx           # Three-pane layout
-│   │   ├── layout.tsx
-│   │   ├── globals.css
-│   │   └── api/
-│   │       ├── deals/
-│   │       │   ├── route.ts                          # GET list
-│   │       │   └── [id]/
-│   │       │       ├── dispatch/route.ts             # POST — SSE stream
-│   │       │       ├── approve-reply/route.ts        # POST
-│   │       │       ├── simulate-reply/route.ts       # POST
-│   │       │       └── close/route.ts                # POST
-│   │       └── invoices/[id]/status/route.ts         # GET/POST
-│   ├── agents/
-│   │   └── council.ts         # Orchestrator → runs all sub-agents, emits SSE
-│   ├── prompts/
-│   │   └── index.ts           # System + user prompts per agent
-│   ├── components/
-│   │   ├── Inbox.tsx
-│   │   ├── EmailDetail.tsx
-│   │   ├── AgentCouncil.tsx
-│   │   ├── ApproveReplyModal.tsx
-│   │   └── ApproveClosingModal.tsx
-│   ├── store/
-│   │   └── deal-store.ts      # Zustand + SSE consumer
-│   └── lib/
-│       ├── llm.ts             # Provider-agnostic streaming LLM client
-│       ├── llm-mock.ts        # Deterministic mock responses
-│       ├── contract.ts        # pdf-lib SOW generator
-│       ├── payment.ts         # Stripe payment links
-│       ├── prisma.ts
-│       ├── types.ts
-│       └── utils.ts
-└── public/contracts/          # Generated SOW PDFs
-```
-
-## Scripts
-
+### 2. Environment Variables
+Copy the `.env.example` file to `.env`:
 ```bash
-npm run dev         # Next dev server
-npm run build       # Production build
-npm run start       # Production server
-npm run db:generate # Regenerate Prisma client
-npm run db:push     # Sync schema to SQLite
-npm run db:seed     # Reset + seed demo data
-npm run db:studio   # Visual DB browser
+cp .env.example .env
+```
+Fill out the variables. You will need:
+- **Supabase**: Create a free Supabase project. Get your Connection Pooler URLs (Port 6543 for `DATABASE_URL` and Port 5432 for `DIRECT_URL`).
+- **Gemini**: Get a free API key from Google AI Studio.
+- **Stripe**: Get your test keys (`sk_test_...` and `pk_test_...`) from the Stripe Developer Dashboard.
+
+### 3. Database Push & Seed
+Sync your Supabase database and seed it with the Hero Demo Data:
+```bash
+npm run db:push
+npx tsx prisma/seed.ts
 ```
 
-## Notes on Hackathon Submission
+### 4. Run Locally
+```bash
+npm run dev
+```
+Navigate to `http://localhost:3000`.
 
-- The **Stripe integration uses test mode** — `sk_test_` keys. No real money moves.
-- The **Scout agent uses cached research** for the demo client. Real web search is a post-hackathon extension.
-- The **Gmail integration is mocked** via seeded inbox + simulate-reply. Real Gmail OAuth is a polish item.
-- **Migrating to Postgres**: change `provider = "postgresql"` in `prisma/schema.prisma` and update `DATABASE_URL`. All model definitions are portable.
-- **Swapping to ERNIE**: the `ernie` branch in `src/lib/llm.ts` is stubbed. When Qianfan credentials arrive, implement the OAuth + streaming flow there — no other file changes required.
+---
 
-## License
+## 🚀 One-Click Deploy to Vercel
 
-Built for the Baidu MeDo Global Hackathon 2026. MIT for everything written here.
+Pactix is optimized for Vercel Serverless deployments. 
+
+1. Push your repository to GitHub.
+2. Go to Vercel and import the project.
+3. In the Environment Variables section, paste everything from your `.env` file (Ensure your Supabase connection strings are correct).
+4. Click **Deploy**.
+
+
+## ⚖️ License
+MIT License - See LICENSE for details.
