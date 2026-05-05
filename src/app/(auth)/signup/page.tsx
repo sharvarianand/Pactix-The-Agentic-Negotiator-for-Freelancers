@@ -52,6 +52,8 @@ export default function SignupPage() {
       });
       
       toast.success("Account ready! Welcome to Pactix.");
+      // Reset onboarding for new user
+      localStorage.removeItem("pactix-onboarding-seen");
       router.push("/dashboard");
       router.refresh();
     }

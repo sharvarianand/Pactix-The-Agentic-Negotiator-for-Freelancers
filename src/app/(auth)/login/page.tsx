@@ -72,6 +72,8 @@ function LoginPageContent() {
       });
       
       toast.success("Welcome to the Demo!");
+      // Reset onboarding for demo
+      localStorage.removeItem("pactix-onboarding-seen");
       router.push("/dashboard");
       router.refresh();
     }
