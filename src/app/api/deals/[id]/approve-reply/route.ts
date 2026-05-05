@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { createClient } from "@/utils/supabase/server";
 
-// POST /api/deals/:id/approve-reply
-// Body: { body: string } — the (possibly user-edited) reply text
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -10,14 +9,26 @@ export async function POST(
   const { id: dealId } = await params;
   const { body } = (await req.json()) as { body?: string };
 
-  // Find the latest un-approved outbound draft on this deal.
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Find the latest un-approved outbound draft on this deal AND check ownership
   const draft = await prisma.message.findFirst({
-    where: { dealId, direction: "outbound", approvedByUser: false },
+    where: { 
+      dealId, 
+      direction: "outbound", 
+      approvedByUser: false,
+      deal: { freelancerId: user.id } // Ownership check
+    },
     orderBy: { sentAt: "desc" },
   });
 
   if (!draft) {
-    return NextResponse.json({ error: "No pending draft to approve" }, { status: 404 });
+    return NextResponse.json({ error: "No pending draft found for this user/deal" }, { status: 404 });
   }
 
   const updated = await prisma.message.update({

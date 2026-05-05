@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { runCouncil, type CouncilEvent } from "@/agents/council";
+import { createClient } from "@/utils/supabase/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,6 +13,23 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: dealId } = await params;
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  // Check ownership
+  const deal = await prisma.deal.findUnique({
+    where: { id: dealId },
+    select: { freelancerId: true },
+  });
+
+  if (!deal || deal.freelancerId !== user.id) {
+    return new Response("Forbidden", { status: 403 });
+  }
 
   // Determine the round: count prior orchestrator traces + 1.
   const priorRounds = await prisma.agentTrace.count({

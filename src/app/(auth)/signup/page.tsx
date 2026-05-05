@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Eye, EyeOff } from "lucide-react";
 import { PactixLogo } from "@/components/shell/Logo";
 import { createClient } from "@/utils/supabase/client";
+import { toast } from "sonner";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -32,12 +33,13 @@ export default function SignupPage() {
     });
 
     if (error) {
-      alert(error.message);
+      toast.error(error.message);
       setLoading(false);
       return;
     }
 
     if (data.user) {
+      toast.info("Assembling your AI council...");
       // Create the profile and seed data
       await fetch("/api/auth/sync", {
         method: "POST",
@@ -49,6 +51,7 @@ export default function SignupPage() {
         }),
       });
       
+      toast.success("Account ready! Welcome to Pactix.");
       router.push("/dashboard");
       router.refresh();
     }

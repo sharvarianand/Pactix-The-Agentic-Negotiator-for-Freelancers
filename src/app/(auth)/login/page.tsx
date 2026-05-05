@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Eye, EyeOff } from "lucide-react";
 import { PactixLogo } from "@/components/shell/Logo";
 import { createClient } from "@/utils/supabase/client";
+import { toast } from "sonner";
 
 const DEMO_LINES = [
   "ORCHESTRATOR → classifying deal scope…",
@@ -53,11 +54,12 @@ export default function LoginPage() {
     });
 
     if (error) {
-      alert(error.message);
+      toast.error(error.message);
       setLoading(false);
       return;
     }
 
+    toast.success("Welcome back!");
     router.push("/dashboard");
     router.refresh();
   }

@@ -101,13 +101,25 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {/* Bottom user row */}
         <div className="border-t border-[var(--color-border)] p-3">
           <div className="flex items-center gap-3 px-2 py-2">
-            <div className="w-7 h-7 bg-[var(--color-text)] flex items-center justify-center text-[var(--color-bg)] font-mono text-[10px] font-bold shrink-0">
-              {userProfile?.name?.slice(0, 2).toUpperCase() || "..."}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-xs font-medium truncate">{userProfile?.name || "Loading..."}</div>
-              <div className="font-mono text-[9px] text-[var(--color-text-muted)] truncate">{userProfile?.email || "..."}</div>
-            </div>
+            {userProfile ? (
+              <>
+                <div className="w-7 h-7 bg-[var(--color-text)] flex items-center justify-center text-[var(--color-bg)] font-mono text-[10px] font-bold shrink-0">
+                  {userProfile.name?.slice(0, 2).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-medium truncate">{userProfile.name}</div>
+                  <div className="font-mono text-[9px] text-[var(--color-text-muted)] truncate">{userProfile.email}</div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="w-7 h-7 bg-[var(--color-border)] animate-pulse shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-2 w-16 bg-[var(--color-border)] animate-pulse rounded" />
+                  <div className="h-1.5 w-24 bg-[var(--color-border-dim)] animate-pulse rounded" />
+                </div>
+              </>
+            )}
             <button onClick={handleLogout} className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors">
               <LogOut className="w-3.5 h-3.5" />
             </button>
