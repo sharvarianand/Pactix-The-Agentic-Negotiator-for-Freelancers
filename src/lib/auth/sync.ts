@@ -54,6 +54,7 @@ export async function ensureFreelancerProfile(userId: string | null, email: stri
   }
 
   let freelancer = existing;
+  let shouldSeed = false;
 
   if (!freelancer) {
     // If we only have email and no userId, don't create a new one (just a lookup)
@@ -61,7 +62,7 @@ export async function ensureFreelancerProfile(userId: string | null, email: stri
 
     // Create new freelancer
     const freelancerName = name || email.split("@")[0] || "New User";
-    freelancer = await prisma.freelancer.create({
+    freelancer = await (prisma.freelancer.create({
       data: {
         id: userId,
         name: freelancerName,
@@ -70,12 +71,18 @@ export async function ensureFreelancerProfile(userId: string | null, email: stri
         currency: "USD",
         voiceStyleSamples: JSON.stringify(VOICE_SAMPLES),
       },
-    });
+    }) as any);
+    shouldSeed = true;
+  } else {
+    // If existing, check if they have deals
+    const dealCount = (freelancer as any)._count?.deals || 0;
+    if (dealCount === 0) {
+      shouldSeed = true;
+    }
   }
 
-  // If the freelancer has no deals, seed the demo data
-  const dealCount = (freelancer as any)._count?.deals || 0;
-  if (dealCount === 0) {
+  // If we need to seed, do it now
+  if (shouldSeed && freelancer) {
     await seedDemoDeals(freelancer.id);
   }
 
