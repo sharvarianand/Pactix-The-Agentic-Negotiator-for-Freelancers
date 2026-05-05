@@ -32,15 +32,34 @@ export default function LoginPage() {
 
   async function handleDemo() {
     setLoading(true);
-    // Directly log in as a demo user or just use a standard login
-    // For now, we'll just show the login form or provide a "Demo Login" button
-    // that uses a predefined demo account if you have one, 
-    // but the user wants NEW users to also have the same details.
-    // So we'll just encourage signing in/up.
+    const supabase = createClient();
     
-    // If they want a "one-click" demo, we can use an anonymous sign-in or a shared demo account.
-    // But since they want NEW users to have it too, standard auth is better.
-    router.push("/signup"); 
+    // Sign in anonymously
+    const { data, error } = await supabase.auth.signInAnonymously();
+
+    if (error) {
+      toast.error(error.message);
+      setLoading(false);
+      return;
+    }
+
+    if (data.user) {
+      toast.info("Preparing your workspace...");
+      // Seed the anonymous user with demo data
+      await fetch("/api/auth/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: data.user.id,
+          email: data.user.email || `demo_${data.user.id.slice(0, 5)}@pactix.com`,
+          name: "Guest User",
+        }),
+      });
+      
+      toast.success("Welcome to the Demo!");
+      router.push("/dashboard");
+      router.refresh();
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {

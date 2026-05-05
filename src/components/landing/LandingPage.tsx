@@ -9,25 +9,64 @@ import { ArenaPreview } from "./ArenaPreview";
 import { AgentRoll } from "./AgentRoll";
 import { Marquee } from "./Marquee";
 
+import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+
 export function LandingPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  async function handleDemo() {
+    setLoading(true);
+    const supabase = createClient();
+    
+    // Sign in anonymously
+    const { data, error } = await supabase.auth.signInAnonymously();
+
+    if (error) {
+      toast.error(error.message);
+      setLoading(false);
+      return;
+    }
+
+    if (data.user) {
+      toast.info("Preparing your demo workspace...");
+      // Seed the anonymous user with demo data
+      await fetch("/api/auth/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: data.user.id,
+          email: data.user.email || `demo_${data.user.id.slice(0, 5)}@pactix.com`,
+          name: "Guest User",
+        }),
+      });
+      
+      toast.success("Welcome to the Demo!");
+      router.push("/dashboard");
+      router.refresh();
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)] overflow-x-hidden">
-      <Nav />
-      <Hero />
+      <Nav onDemo={handleDemo} loading={loading} />
+      <Hero onDemo={handleDemo} loading={loading} />
       <Marquee />
       <Manifesto />
       <ArenaPreview />
       <AgentRoll />
       <HowItWorks />
       <Stats />
-      <FinalCTA />
-      <Footer />
+      <FinalCTA onDemo={handleDemo} loading={loading} />
+      <Footer onDemo={handleDemo} />
     </div>
   );
 }
 
 /* ───────────── NAV ───────────── */
-function Nav() {
+function Nav({ onDemo, loading }: { onDemo: () => void; loading: boolean }) {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-[var(--color-bg)] border-b border-[var(--color-border)]">
       <div className="mx-auto max-w-[1400px] px-6 h-14 flex items-center gap-6">
@@ -40,7 +79,7 @@ function Nav() {
           {[
             ["#arena", "The Arena"],
             ["#agents", "Agents"],
-            ["#process", "Process"],
+            ["#process", "How it works"],
           ].map(([href, label]) => (
             <a
               key={href}
@@ -59,12 +98,13 @@ function Nav() {
           >
             Sign in
           </Link>
-          <Link
-            href="/dashboard"
-            className="btn-signal px-4 py-2 text-sm inline-flex items-center gap-1.5 font-semibold"
+          <button
+            onClick={onDemo}
+            disabled={loading}
+            className="btn-signal px-4 py-2 text-sm inline-flex items-center gap-1.5 font-semibold disabled:opacity-50"
           >
-            Open desk <ArrowUpRight className="w-3.5 h-3.5" />
-          </Link>
+            {loading ? "Loading..." : "Open desk"} <ArrowUpRight className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
     </header>
@@ -72,7 +112,7 @@ function Nav() {
 }
 
 /* ───────────── HERO ───────────── */
-function Hero() {
+function Hero({ onDemo, loading }: { onDemo: () => void; loading: boolean }) {
   return (
     <section className="relative pt-28 pb-0 overflow-hidden">
       {/* Subtle dot-grid texture */}
@@ -171,14 +211,15 @@ function Hero() {
           className="mt-12 pb-16 flex flex-col sm:flex-row items-start sm:items-center gap-6 border-t border-[var(--color-border)] pt-10"
         >
           <div className="flex items-center gap-3">
-            <Link
-              href="/dashboard"
-              className="btn-signal px-6 py-3.5 text-base inline-flex items-center gap-2 font-semibold"
+            <button
+              onClick={onDemo}
+              disabled={loading}
+              className="btn-signal px-6 py-3.5 text-base inline-flex items-center gap-2 font-semibold disabled:opacity-50"
             >
-              Run the demo <ArrowRight className="w-4 h-4" />
-            </Link>
+              {loading ? "Preparing desk..." : "Run the demo"} <ArrowRight className="w-4 h-4" />
+            </button>
             <Link
-              href="/login"
+              href="/signup"
               className="btn-ghost px-6 py-3.5 text-base inline-flex items-center gap-2"
             >
               Sign up free
@@ -517,7 +558,7 @@ function Stats() {
 }
 
 /* ───────────── FINAL CTA ───────────── */
-function FinalCTA() {
+function FinalCTA({ onDemo, loading }: { onDemo: () => void; loading: boolean }) {
   return (
     <section className="border-t border-[var(--color-border)]">
       <div className="mx-auto max-w-[1400px] px-6 py-32 grid grid-cols-12 gap-6 items-end">
@@ -536,13 +577,14 @@ function FinalCTA() {
           </h2>
         </div>
         <div className="col-span-12 lg:col-span-4 flex flex-col items-start lg:items-end gap-4 pb-2">
-          <Link
-            href="/dashboard"
-            className="btn-signal px-7 py-4 text-base inline-flex items-center gap-2.5 font-semibold w-full lg:w-auto justify-center"
+          <button
+            onClick={onDemo}
+            disabled={loading}
+            className="btn-signal px-7 py-4 text-base inline-flex items-center gap-2.5 font-semibold w-full lg:w-auto justify-center disabled:opacity-50"
           >
             <Zap className="w-4 h-4" />
-            Open the deal desk
-          </Link>
+            {loading ? "Waking up agents..." : "Open the deal desk"}
+          </button>
           <div className="font-mono text-[10px] tracking-widest uppercase text-[var(--color-text-muted)]">
             Demo data preloaded · No setup
           </div>
@@ -582,9 +624,8 @@ function Footer() {
         <div className="col-span-6 md:col-span-2">
           <div className="font-mono text-[10px] tracking-widest uppercase text-[var(--color-text-muted)] mb-4">Access</div>
           <div className="flex flex-col gap-2.5">
-            {[["/login", "Sign in"], ["/dashboard", "Dashboard"], ["/dashboard", "Run demo"]].map(([href, label]) => (
-              <Link key={label} href={href} className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors">{label}</Link>
-            ))}
+            <Link href="/login" className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors">Sign in</Link>
+            <button onClick={onDemo} className="text-left text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors">Run demo</button>
           </div>
         </div>
 
