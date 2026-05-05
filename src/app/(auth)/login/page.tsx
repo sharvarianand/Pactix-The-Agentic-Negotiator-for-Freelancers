@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, Eye, EyeOff } from "lucide-react";
 import { PactixLogo } from "@/components/shell/Logo";
+import { createClient } from "@/utils/supabase/client";
 
 const DEMO_LINES = [
   "ORCHESTRATOR → classifying deal scope…",
@@ -28,23 +29,37 @@ export default function LoginPage() {
     router.push("/dashboard");
   }
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleDemo() {
     setLoading(true);
-    setSessionAndGo();
+    // Directly log in as a demo user or just use a standard login
+    // For now, we'll just show the login form or provide a "Demo Login" button
+    // that uses a predefined demo account if you have one, 
+    // but the user wants NEW users to also have the same details.
+    // So we'll just encourage signing in/up.
+    
+    // If they want a "one-click" demo, we can use an anonymous sign-in or a shared demo account.
+    // But since they want NEW users to have it too, standard auth is better.
+    router.push("/signup"); 
   }
 
-  function handleDemo() {
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
     setLoading(true);
-    let i = 0;
-    const interval = setInterval(() => {
-      i++;
-      setTickIdx(i % DEMO_LINES.length);
-      if (i >= DEMO_LINES.length) {
-        clearInterval(interval);
-        setSessionAndGo();
-      }
-    }, 120);
+    
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      alert(error.message);
+      setLoading(false);
+      return;
+    }
+
+    router.push("/dashboard");
+    router.refresh();
   }
 
   return (

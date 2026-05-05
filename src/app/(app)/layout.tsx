@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
 import {
   LayoutGrid,
   Bot,
@@ -29,9 +31,27 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const router = useRouter();
 
+  const [userProfile, setUserProfile] = useState<{ name: string; email: string } | null>(null);
+
+  useEffect(() => {
+    async function fetchUser() {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserProfile({
+          name: user.user_metadata.full_name || user.email?.split("@")[0] || "User",
+          email: user.email || "",
+        });
+      }
+    }
+    fetchUser();
+  }, []);
+
   async function handleLogout() {
-    await fetch("/api/auth/logout", { method: "POST" });
+    const supabase = createClient();
+    await supabase.auth.signOut();
     router.push("/login");
+    router.refresh();
   }
 
   return (
@@ -82,11 +102,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="border-t border-[var(--color-border)] p-3">
           <div className="flex items-center gap-3 px-2 py-2">
             <div className="w-7 h-7 bg-[var(--color-text)] flex items-center justify-center text-[var(--color-bg)] font-mono text-[10px] font-bold shrink-0">
-              MC
+              {userProfile?.name?.slice(0, 2).toUpperCase() || "..."}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-xs font-medium truncate">Maya Chen</div>
-              <div className="font-mono text-[9px] text-[var(--color-text-muted)] truncate">demo@pactix.ai</div>
+              <div className="text-xs font-medium truncate">{userProfile?.name || "Loading..."}</div>
+              <div className="font-mono text-[9px] text-[var(--color-text-muted)] truncate">{userProfile?.email || "..."}</div>
             </div>
             <button onClick={handleLogout} className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors">
               <LogOut className="w-3.5 h-3.5" />

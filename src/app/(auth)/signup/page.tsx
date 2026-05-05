@@ -4,20 +4,54 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Eye, EyeOff } from "lucide-react";
 import { PactixLogo } from "@/components/shell/Logo";
+import { createClient } from "@/utils/supabase/client";
 
 export default function SignupPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    await fetch("/api/auth/login", { method: "POST" });
-    router.push("/dashboard");
+
+    const supabase = createClient();
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: name,
+        },
+      },
+    });
+
+    if (error) {
+      alert(error.message);
+      setLoading(false);
+      return;
+    }
+
+    if (data.user) {
+      // Create the profile and seed data
+      await fetch("/api/auth/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: data.user.id,
+          email: data.user.email,
+          name: name,
+        }),
+      });
+      
+      router.push("/dashboard");
+      router.refresh();
+    }
   }
 
   return (
@@ -72,21 +106,50 @@ export default function SignupPage() {
             </h1>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              {[
-                { label: "Full name", value: name, set: setName, type: "text", placeholder: "Maya Chen" },
-                { label: "Email", value: email, set: setEmail, type: "email", placeholder: "you@studio.com" },
-              ].map(({ label, value, set, type, placeholder }) => (
-                <div key={label} className="flex flex-col gap-1.5">
-                  <label className="font-mono text-[10px] tracking-widest uppercase text-[var(--color-text-muted)]">{label}</label>
+              <div className="flex flex-col gap-1.5">
+                <label className="font-mono text-[10px] tracking-widest uppercase text-[var(--color-text-muted)]">Full name</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Maya Chen"
+                  className="w-full border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-text)] transition-colors placeholder:text-[var(--color-text-dim)]"
+                  required
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="font-mono text-[10px] tracking-widest uppercase text-[var(--color-text-muted)]">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@studio.com"
+                  className="w-full border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-text)] transition-colors placeholder:text-[var(--color-text-dim)]"
+                  required
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="font-mono text-[10px] tracking-widest uppercase text-[var(--color-text-muted)]">Password</label>
+                <div className="relative">
                   <input
-                    type={type}
-                    value={value}
-                    onChange={(e) => set(e.target.value)}
-                    placeholder={placeholder}
-                    className="w-full border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-text)] transition-colors placeholder:text-[var(--color-text-dim)]"
+                    type={showPw ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-text)] transition-colors placeholder:text-[var(--color-text-dim)] pr-12"
+                    required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPw(!showPw)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors"
+                  >
+                    {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
-              ))}
+              </div>
 
               <button
                 type="submit"
