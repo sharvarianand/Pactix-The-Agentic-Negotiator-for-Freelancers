@@ -41,6 +41,7 @@ export async function ensureFreelancerProfile(userId: string | null, email: stri
   if (userId) {
     existing = await prisma.freelancer.findUnique({
       where: { id: userId },
+      include: { _count: { select: { deals: true } } }
     });
   }
 
@@ -48,42 +49,52 @@ export async function ensureFreelancerProfile(userId: string | null, email: stri
   if (!existing && email) {
     existing = await prisma.freelancer.findUnique({
       where: { email: email },
+      include: { _count: { select: { deals: true } } }
     });
   }
 
-  if (existing) return existing;
+  let freelancer = existing;
 
-  // If we only have email and no userId, don't create a new one (just a lookup)
-  if (!userId) return null;
+  if (!freelancer) {
+    // If we only have email and no userId, don't create a new one (just a lookup)
+    if (!userId) return null;
 
-  // Create new freelancer with demo data
+    // Create new freelancer
+    const freelancerName = name || email.split("@")[0] || "New User";
+    freelancer = await prisma.freelancer.create({
+      data: {
+        id: userId,
+        name: freelancerName,
+        email: email,
+        floorRateHourly: 120,
+        currency: "USD",
+        voiceStyleSamples: JSON.stringify(VOICE_SAMPLES),
+      },
+    });
+  }
 
-  // Create new freelancer with demo data
-  const freelancerName = name || email.split("@")[0] || "New User";
-  
-  const freelancer = await prisma.freelancer.create({
-    data: {
-      id: userId,
-      name: freelancerName,
-      email: email,
-      floorRateHourly: 120,
-      currency: "USD",
-      voiceStyleSamples: JSON.stringify(VOICE_SAMPLES),
-    },
-  });
+  // If the freelancer has no deals, seed the demo data
+  const dealCount = (freelancer as any)._count?.deals || 0;
+  if (dealCount === 0) {
+    await seedDemoDeals(freelancer.id);
+  }
 
-  // Seed demo deals for this new user
+  return freelancer;
+}
+
+async function seedDemoDeals(freelancerId: string) {
+  // Seed demo deals for this freelancer
   const client1 = await prisma.client.create({
     data: {
       company: "Lumen Analytics",
-      contactEmail: `jordan_${userId.slice(0, 5)}@lumen.analytics`,
+      contactEmail: `jordan_${freelancerId.slice(0, 5)}@lumen.analytics`,
       researchCache: JSON.stringify(CLIENT_RESEARCH),
     },
   });
 
   await prisma.deal.create({
     data: {
-      freelancerId: freelancer.id,
+      freelancerId: freelancerId,
       clientId: client1.id,
       status: "new",
       briefText: FRENCH_DEMO_INBOUND,
@@ -100,13 +111,13 @@ export async function ensureFreelancerProfile(userId: string | null, email: stri
   const client2 = await prisma.client.create({
     data: {
       company: "Orbital Mechanics",
-      contactEmail: `priya_${userId.slice(0, 5)}@orbital.so`,
+      contactEmail: `priya_${freelancerId.slice(0, 5)}@orbital.so`,
     },
   });
 
   const orbitalDeal = await prisma.deal.create({
     data: {
-      freelancerId: freelancer.id,
+      freelancerId: freelancerId,
       clientId: client2.id,
       status: "negotiating",
       briefText: "Looking for a complete redesign of our dashboard. Budget is $2,000.",
@@ -151,6 +162,4 @@ export async function ensureFreelancerProfile(userId: string | null, email: stri
       }
     });
   }
-
-  return freelancer;
 }
