@@ -220,13 +220,25 @@ export const useDealStore = create<State>((set, get) => ({
   },
 
   approveReply: async (dealId, body) => {
-    await fetch(`/api/deals/${dealId}/approve-reply`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ body }),
-    });
-    set({ approveReplyOpen: false });
-    await get().loadDeals();
+    // Optimistic update
+    set((s) => ({
+      deals: s.deals.map((d) =>
+        d.id === dealId ? { ...d, status: "negotiating" } : d
+      ),
+      approveReplyOpen: false,
+    }));
+
+    try {
+      await fetch(`/api/deals/${dealId}/approve-reply`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body }),
+      });
+      await get().loadDeals();
+    } catch (err) {
+      console.error("Failed to approve reply:", err);
+      // Revert if needed (though usually fine)
+    }
   },
 
   simulateClientReply: async (dealId) => {

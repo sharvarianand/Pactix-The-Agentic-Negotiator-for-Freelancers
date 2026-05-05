@@ -42,7 +42,7 @@ function DebateBubble({ msg, index }: { msg: DebateMessage; index: number }) {
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4, delay: 0.1 }}
+        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
         className="flex flex-col items-center gap-3 py-6 px-4"
       >
         <div className="flex items-center gap-2 mb-1">
@@ -63,9 +63,9 @@ function DebateBubble({ msg, index }: { msg: DebateMessage; index: number }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: isLeft ? -20 : 20, y: 10 }}
+      initial={{ opacity: 0, x: isLeft ? -10 : 10, y: 5 }}
       animate={{ opacity: 1, x: 0, y: 0 }}
-      transition={{ duration: 0.35, delay: 0.05 }}
+      transition={{ duration: 0.25, delay: 0.02 }}
       className={`flex gap-3 max-w-[75%] ${isLeft ? "self-start" : "self-end flex-row-reverse"}`}
     >
       <AgentAvatar agent={msg.agent} size="sm" />
@@ -108,7 +108,7 @@ export function DebateArena() {
 
       if (currentText.length > prevText.length) {
         const newText = currentText.slice(prevText.length).trim();
-        if (newText.length > 5) {
+        if (newText.length > 2) {
           // Split long texts into sentence-sized chunks for debate effect
           const sentences = newText.match(/[^.!?]+[.!?]+/g) || [newText];
           for (const sentence of sentences) {

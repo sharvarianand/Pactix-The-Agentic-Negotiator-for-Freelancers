@@ -78,7 +78,7 @@ export function OnboardingTour() {
           initial={{ opacity: 0, scale: 0.92, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.92, y: -20 }}
-          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
           className="w-full max-w-md bg-[var(--color-panel)] border border-[var(--color-border-strong)] shadow-2xl"
         >
           {/* Progress bar */}

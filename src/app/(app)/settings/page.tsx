@@ -88,9 +88,29 @@ export default function SettingsPage() {
   }, []);
 
   async function handleSave() {
-    setSaved(true);
-    toast.success("Settings updated");
-    setTimeout(() => setSaved(false), 2000);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/settings/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          email,
+          voiceStyleSamples: voice,
+          floorRateHourly: parseFloat(floor),
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to save settings");
+
+      setSaved(true);
+      toast.success("Settings saved to your profile");
+      setTimeout(() => setSaved(false), 2000);
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function connectGoogle() {

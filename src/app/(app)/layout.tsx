@@ -34,17 +34,35 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [userProfile, setUserProfile] = useState<{ name: string; email: string } | null>(null);
 
   useEffect(() => {
+    const supabase = createClient();
+
     async function fetchUser() {
-      const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUserProfile({
           name: user.user_metadata.full_name || user.email?.split("@")[0] || "User",
           email: user.email || "",
         });
+      } else {
+        setUserProfile(null);
       }
     }
+
     fetchUser();
+
+    // Listen for auth state changes to update the profile instantly
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUserProfile({
+          name: session.user.user_metadata.full_name || session.user.email?.split("@")[0] || "User",
+          email: session.user.email || "",
+        });
+      } else {
+        setUserProfile(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   async function handleLogout() {
