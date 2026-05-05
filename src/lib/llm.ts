@@ -214,7 +214,7 @@ async function* streamGemini(
   start: number
 ): AsyncGenerator<LLMStreamChunk, void, void> {
   const apiKey = resolveGeminiApiKey();
-  const modelName = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+  const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash";
   if (!apiKey) {
     yield* streamMock(req, start);
     return;
@@ -287,7 +287,7 @@ async function* streamOpenRouter(
   start: number
 ): AsyncGenerator<LLMStreamChunk, void, void> {
   const apiKey = process.env.OPENROUTER_API_KEY;
-  const model = process.env.OPENROUTER_MODEL || "meta-llama/llama-3.1-8b-instruct:free";
+  const model = process.env.OPENROUTER_MODEL || "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free";
   if (!apiKey) {
     yield* streamMock(req, start);
     return;
