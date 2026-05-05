@@ -1,7 +1,3 @@
-// Pactix — Prisma schema
-// SQLite for hackathon velocity. Migrate to Postgres later by changing provider + DATABASE_URL.
-// Enums stored as text (SQLite limitation) — validated at the app layer via Zod/TS unions.
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,136 +8,98 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// -----------------------------------------------------------------------------
-// Freelancer — the Pactix user
-// -----------------------------------------------------------------------------
 model Freelancer {
-  id                 String   @id @default(cuid())
-  name               String
-  email              String   @unique
-  floorRateHourly    Float
-  currency           String   @default("USD")
-  stripeAccountId    String?
-  // JSON array of up to 10 past sent-email bodies for voice cloning
-  voiceStyleSamples  String   @default("[]") // JSON-encoded string[]
-  createdAt          DateTime @default(now())
-
-  deals              Deal[]
+  id                String   @id @default(cuid())
+  name              String
+  email             String   @unique
+  floorRateHourly   Float
+  currency          String   @default("USD")
+  stripeAccountId   String?
+  voiceStyleSamples String   @default("[]")
+  createdAt         DateTime @default(now())
+  deals             Deal[]
 }
 
-// -----------------------------------------------------------------------------
-// Client — the person emailing the freelancer
-// -----------------------------------------------------------------------------
 model Client {
-  id              String   @id @default(cuid())
-  company         String
-  contactEmail    String   @unique
-  // JSON object of Scout agent's cached findings (funding, spend signals, etc.)
-  researchCache   String?  // JSON-encoded object
-  firstSeenAt     DateTime @default(now())
-
-  deals           Deal[]
+  id            String   @id @default(cuid())
+  company       String
+  contactEmail  String   @unique
+  researchCache String?
+  firstSeenAt   DateTime @default(now())
+  deals         Deal[]
 }
 
-// -----------------------------------------------------------------------------
-// Deal — a negotiation thread
-// -----------------------------------------------------------------------------
-// status: 'new' | 'negotiating' | 'accepted' | 'rejected' | 'closed' | 'lost'
 model Deal {
-  id              String    @id @default(cuid())
-  freelancerId    String
-  clientId        String
-  status          String    @default("new")
-  briefText       String
-  agreedAmount    Float?
-  // Locked scope JSON: { deliverables, revisions, timeline, depositPct }
-  scope           String?   // JSON-encoded
-  winProbability  Float?
-  createdAt       DateTime  @default(now())
-  closedAt        DateTime?
-
-  freelancer      Freelancer    @relation(fields: [freelancerId], references: [id])
-  client          Client        @relation(fields: [clientId], references: [id])
-  messages        Message[]
-  agentTraces     AgentTrace[]
-  contract        Contract?
-  invoices        Invoice[]
+  id             String       @id @default(cuid())
+  freelancerId   String
+  clientId       String
+  status         String       @default("new")
+  briefText      String
+  agreedAmount   Float?
+  scope          String?
+  winProbability Float?
+  createdAt      DateTime     @default(now())
+  closedAt       DateTime?
+  agentTraces    AgentTrace[]
+  contract       Contract?
+  client         Client       @relation(fields: [clientId], references: [id])
+  freelancer     Freelancer   @relation(fields: [freelancerId], references: [id])
+  invoices       Invoice[]
+  messages       Message[]
 
   @@index([status])
   @@index([freelancerId])
 }
 
-// -----------------------------------------------------------------------------
-// Message — every inbound/outbound email in a deal
-// -----------------------------------------------------------------------------
-// direction: 'inbound' | 'outbound'
 model Message {
-  id              String   @id @default(cuid())
-  dealId          String
-  direction       String
-  body            String
-  sentAt          DateTime @default(now())
-  approvedByUser  Boolean  @default(false)
-
-  deal            Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  id             String   @id @default(cuid())
+  dealId         String
+  direction      String
+  body           String
+  sentAt         DateTime @default(now())
+  approvedByUser Boolean  @default(false)
+  deal           Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
 
   @@index([dealId])
 }
 
-// -----------------------------------------------------------------------------
-// AgentTrace — reasoning + output from every agent invocation
-// -----------------------------------------------------------------------------
-// agentName: 'orchestrator' | 'scout' | 'prosecutor' | 'defense' | 'judge'
-//          | 'negotiator' | 'contract' | 'payment'
 model AgentTrace {
-  id          String   @id @default(cuid())
-  dealId      String
-  agentName   String
-  round       Int      @default(1)
-  reasoning   String
-  output      String   // JSON-encoded output object
-  model       String
-  latencyMs   Int
-  createdAt   DateTime @default(now())
-
-  deal        Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  dealId    String
+  agentName String
+  round     Int      @default(1)
+  reasoning String
+  output    String
+  model     String
+  latencyMs Int
+  createdAt DateTime @default(now())
+  deal      Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
 
   @@index([dealId])
   @@index([dealId, agentName, round])
 }
 
-// -----------------------------------------------------------------------------
-// Contract — 1-page SOW PDF
-// -----------------------------------------------------------------------------
 model Contract {
-  id             String    @id @default(cuid())
-  dealId         String    @unique
-  pdfUrl         String    // path under /public/contracts or data URL
-  // Snapshot of deal.scope at contract generation time
-  scopeSnapshot  String    // JSON-encoded
-  createdAt      DateTime  @default(now())
-  signedAt       DateTime?
-
-  deal           Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  id            String    @id @default(cuid())
+  dealId        String    @unique
+  pdfUrl        String
+  scopeSnapshot String
+  createdAt     DateTime  @default(now())
+  signedAt      DateTime?
+  deal          Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
 }
 
-// -----------------------------------------------------------------------------
-// Invoice — Stripe payment link
-// -----------------------------------------------------------------------------
-// kind: 'deposit' | 'final'
-// status: 'pending' | 'paid' | 'expired' | 'void'
 model Invoice {
-  id                   String    @id @default(cuid())
-  dealId               String
-  kind                 String
-  stripePaymentLink    String
-  stripePaymentLinkId  String?   // for polling
-  amount               Float
-  status               String    @default("pending")
-  createdAt            DateTime  @default(now())
-  paidAt               DateTime?
-
-  deal                 Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  id                  String    @id @default(cuid())
+  dealId              String
+  kind                String
+  stripePaymentLink   String
+  stripePaymentLinkId String?
+  amount              Float
+  status              String    @default("pending")
+  createdAt           DateTime  @default(now())
+  paidAt              DateTime?
+  deal                Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
 
   @@index([dealId])
   @@index([status])
