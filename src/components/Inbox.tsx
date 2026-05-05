@@ -1,8 +1,10 @@
 "use client";
 
-import { Inbox as InboxIcon } from "lucide-react";
+import { Inbox as InboxIcon, RefreshCw } from "lucide-react";
 import { useDealStore, type DealRow } from "@/store/deal-store";
 import { cn, formatRelative } from "@/lib/utils";
+import { useState } from "react";
+import { toast } from "sonner";
 
 const STATUS_STYLES: Record<string, string> = {
   new: "bg-[var(--color-accent)]/15 text-[var(--color-accent)] border-[var(--color-accent)]/30",
@@ -73,14 +75,38 @@ function InboxItem({
 
 export function Inbox() {
   const deals = useDealStore((s) => s.deals);
+  const loadDeals = useDealStore((s) => s.loadDeals);
   const selectedDealId = useDealStore((s) => s.selectedDealId);
   const selectDeal = useDealStore((s) => s.selectDeal);
+  const [syncing, setSyncing] = useState(false);
+
+  async function handleSync() {
+    setSyncing(true);
+    const id = toast.loading("Scanning Gmail...");
+    try {
+      const res = await fetch("/api/sync/gmail", { method: "POST" });
+      if (!res.ok) throw new Error("Sync failed");
+      await loadDeals();
+      toast.success("Inbox up to date", { id });
+    } catch (e) {
+      toast.error("Connect Gmail in settings first", { id });
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   return (
     <aside className="w-[300px] shrink-0 flex flex-col border-r border-[var(--color-border)] bg-[var(--color-panel)]">
       <div className="px-4 py-3 border-b border-[var(--color-border)] flex items-center gap-2">
         <InboxIcon className="w-4 h-4 text-[var(--color-text-muted)]" />
         <div className="text-sm font-medium">Inbox</div>
+        <button
+          onClick={handleSync}
+          disabled={syncing}
+          className="ml-2 p-1 hover:bg-[var(--color-panel-2)] transition-colors rounded"
+        >
+          <RefreshCw className={cn("w-3 h-3 text-[var(--color-text-muted)]", syncing && "animate-spin")} />
+        </button>
         <div className="ml-auto text-xs text-[var(--color-text-dim)]">
           {deals.length}
         </div>
