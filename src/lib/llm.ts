@@ -9,7 +9,7 @@ import {
 } from "@google/generative-ai";
 import { getMockResponse } from "./llm-mock";
 
-export type LLMProvider = "gemini" | "openai" | "ernie" | "mock";
+export type LLMProvider = "gemini" | "openai" | "openrouter" | "ernie" | "mock";
 
 export interface LLMRequest {
   system: string;
@@ -33,7 +33,7 @@ export interface LLMStreamChunk {
 
 function currentProvider(): LLMProvider {
   const p = (process.env.LLM_PROVIDER || "mock").toLowerCase();
-  if (p === "gemini" || p === "openai" || p === "ernie" || p === "mock") return p;
+  if (p === "gemini" || p === "openai" || p === "openrouter" || p === "ernie" || p === "mock") return p;
   return "mock";
 }
 
@@ -148,13 +148,46 @@ export async function* streamJSON(
   const provider = currentProvider();
   const start = Date.now();
 
+  // If the primary provider is gemini, we allow fallback to openrouter
+  if (provider === "gemini") {
+    let success = false;
+    try {
+      for await (const chunk of streamGemini(req, start)) {
+        if (chunk.type === "error") {
+          // If we hit an error before any reasoning/data, we can try falling back
+          console.error("Gemini failed, checking for fallback...", chunk.error);
+          break; 
+        }
+        success = true;
+        yield chunk;
+      }
+    } catch (e) {
+      console.error("Gemini stream threw error, checking for fallback...", e);
+    }
+
+    if (!success && process.env.OPENROUTER_API_KEY) {
+      console.log("Falling back to OpenRouter...");
+      yield* streamOpenRouter(req, start);
+      return;
+    } else if (!success) {
+      yield {
+        type: "error",
+        error: "Gemini failed and no fallback (OpenRouter) configured.",
+        latencyMs: Date.now() - start,
+      };
+      return;
+    }
+    return;
+  }
+
+  // Non-fallback paths
   try {
     switch (provider) {
-      case "gemini":
-        yield* streamGemini(req, start);
-        break;
       case "openai":
         yield* streamOpenAI(req, start);
+        break;
+      case "openrouter":
+        yield* streamOpenRouter(req, start);
         break;
       case "ernie":
         yield* streamErnie(req, start);
@@ -249,6 +282,97 @@ async function* streamGemini(
 // ---------------------------------------------------------------------------
 // OpenAI (fallback)
 // ---------------------------------------------------------------------------
+async function* streamOpenRouter(
+  req: LLMRequest,
+  start: number
+): AsyncGenerator<LLMStreamChunk, void, void> {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  const model = process.env.OPENROUTER_MODEL || "meta-llama/llama-3-8b-instruct:free";
+  if (!apiKey) {
+    yield* streamMock(req, start);
+    return;
+  }
+
+  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+      "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+      "X-Title": "Pactix",
+    },
+    body: JSON.stringify({
+      model,
+      stream: true,
+      temperature: req.temperature ?? 0.5,
+      // OpenRouter supports JSON mode for some models, but we'll stick to our extraction logic
+      // to be safe across different free models.
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: req.system },
+        {
+          role: "user",
+          content: req.schemaHint
+            ? `${req.user}\n\nReturn strictly valid JSON matching this shape:\n${req.schemaHint}`
+            : req.user,
+        },
+      ],
+    }),
+  });
+
+  if (!res.ok || !res.body) {
+    yield {
+      type: "error",
+      error: `OpenRouter HTTP ${res.status}: ${await res.text().catch(() => "")}`,
+      latencyMs: Date.now() - start,
+    };
+    return;
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let full = "";
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith("data:")) continue;
+      const payload = trimmed.slice(5).trim();
+      if (payload === "[DONE]") break;
+      try {
+        const json = JSON.parse(payload);
+        const delta = json.choices?.[0]?.delta?.content;
+        if (delta) {
+          full += delta;
+          yield { type: "reasoning", text: delta };
+        }
+      } catch {
+        /* ignore partial */
+      }
+    }
+  }
+
+  const latencyMs = Date.now() - start;
+  try {
+    const parsed = JSON.parse(extractJSON(full));
+    yield { type: "done", data: parsed, model, latencyMs };
+  } catch (e) {
+    yield {
+      type: "error",
+      error: `Failed to parse JSON from OpenRouter: ${
+        e instanceof Error ? e.message : String(e)
+      }. Raw: ${full.slice(0, 300)}`,
+      latencyMs,
+    };
+  }
+}
+
 async function* streamOpenAI(
   req: LLMRequest,
   start: number
