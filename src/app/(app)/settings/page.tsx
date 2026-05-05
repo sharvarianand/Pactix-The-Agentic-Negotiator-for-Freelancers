@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Save, RefreshCw } from "lucide-react";
+import { Save, RefreshCw, Mail, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
+import { createClient } from "@/utils/supabase/client";
 
 function Field({
   label, value, type = "text", onChange, mono = false
@@ -47,19 +49,59 @@ function Section({ title, sub, children }: { title: string; sub: string; childre
 }
 
 export default function SettingsPage() {
-  const [name, setName] = useState("Maya Chen");
-  const [email, setEmail] = useState("maya@studio.com");
-  const [voice, setVoice] = useState("Concise, confident, no fluff. Direct asks. Sign off with — Maya");
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [saved, setSaved] = useState(false);
+  const [isGoogleConnected, setIsGoogleConnected] = useState(false);
+
+  // Form states
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [voice, setVoice] = useState("");
   const [floor, setFloor] = useState("500");
   const [target, setTarget] = useState("1200");
   const [walkaway, setWalkaway] = useState("350");
-  const [geminiKey, setGeminiKey] = useState("AIzaSy••••••••••••••••••••••••");
-  const [saved, setSaved] = useState(false);
 
-  function handleSave() {
+  useEffect(() => {
+    async function loadSettings() {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      try {
+        const res = await fetch(`/api/auth/sync?email=${user.email}`);
+        const data = await res.json();
+        if (data.freelancer) {
+          setProfile(data.freelancer);
+          setName(data.freelancer.name);
+          setEmail(data.freelancer.email);
+          setVoice(data.freelancer.voiceStyleSamples || "");
+          setFloor(data.freelancer.floorRateHourly?.toString() || "500");
+          setIsGoogleConnected(data.freelancer.connectedAccounts?.some((a: any) => a.provider === "google"));
+        }
+      } catch (e) {
+        console.error(e);
+      }
+      setLoading(false);
+    }
+    loadSettings();
+  }, []);
+
+  async function handleSave() {
     setSaved(true);
+    toast.success("Settings updated");
     setTimeout(() => setSaved(false), 2000);
   }
+
+  function connectGoogle() {
+    window.location.href = "/api/auth/google";
+  }
+
+  if (loading) return (
+    <div className="flex-1 flex items-center justify-center font-mono text-sm animate-pulse">
+      SYNCING_CONFIG...
+    </div>
+  );
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -84,7 +126,7 @@ export default function SettingsPage() {
           }}
         >
           {saved ? (
-            <><RefreshCw className="w-4 h-4" /> Saved</>
+            <><RefreshCw className="w-4 h-4 animate-spin" /> Saved</>
           ) : (
             <><Save className="w-4 h-4" /> Save changes</>
           )}
@@ -92,7 +134,38 @@ export default function SettingsPage() {
       </div>
 
       <div className="flex-1 overflow-y-auto px-8 py-8">
-        <div className="max-w-2xl flex flex-col gap-6">
+        <div className="max-w-2xl flex flex-col gap-6 pb-20">
+          
+          {/* Integrations */}
+          <Section title="Integrations" sub="Connect your external platforms to Pactix">
+            <div className="flex items-center justify-between p-4 border border-[var(--color-border)] bg-[var(--color-panel-2)]">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 flex items-center justify-center bg-[#EA4335]/10 text-[#EA4335]">
+                  <Mail className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold">Gmail</div>
+                  <div className="font-mono text-[10px] text-[var(--color-text-muted)]">
+                    {isGoogleConnected ? "Watching for new deals" : "Automate deal detection from your inbox"}
+                  </div>
+                </div>
+              </div>
+              {isGoogleConnected ? (
+                <div className="flex items-center gap-2 text-green-600 font-mono text-[10px] uppercase font-bold">
+                  <CheckCircle2 className="w-4 h-4" /> Connected
+                </div>
+              ) : (
+                <button
+                  onClick={connectGoogle}
+                  className="px-4 py-2 bg-[var(--color-text)] color-[var(--color-bg)] text-xs font-bold hover:opacity-90 transition-opacity"
+                  style={{ color: "var(--color-bg)" }}
+                >
+                  Connect
+                </button>
+              )}
+            </div>
+          </Section>
+
           {/* Profile */}
           <Section title="Profile" sub="Your identity — used to match voice fingerprint">
             <div className="grid grid-cols-2 gap-4">
@@ -125,22 +198,6 @@ export default function SettingsPage() {
             <p className="font-mono text-[10px] text-[var(--color-text-muted)]">
               Judge uses these as bounds. Override per-deal in the arena.
             </p>
-          </Section>
-
-          {/* API keys */}
-          <Section title="API configuration" sub="Keys used by the agent council">
-            <Field label="Gemini API key" value={geminiKey} onChange={setGeminiKey} type="password" mono />
-            <div className="p-4 bg-[var(--color-panel-2)] border border-[var(--color-border)]">
-              <div className="flex items-center gap-2 mb-1">
-                <div className="w-1.5 h-1.5 bg-green-500 signal-pulse" />
-                <span className="font-mono text-[10px] tracking-widest uppercase text-green-600">
-                  Gemini 2.5 Flash · Connected
-                </span>
-              </div>
-              <p className="font-mono text-[10px] text-[var(--color-text-muted)]">
-                Model: gemini-2.5-flash · Provider: Google AI Studio
-              </p>
-            </div>
           </Section>
 
           {/* Notifications */}

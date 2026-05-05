@@ -18,6 +18,22 @@ model Freelancer {
   voiceStyleSamples String   @default("[]")
   createdAt         DateTime @default(now())
   deals             Deal[]
+  connectedAccounts ConnectedAccount[]
+}
+
+model ConnectedAccount {
+  id           String     @id @default(cuid())
+  freelancerId String
+  provider     String     // e.g., "google"
+  email        String?
+  accessToken  String     @db.Text
+  refreshToken String?    @db.Text
+  expiresAt    DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  freelancer   Freelancer @relation(fields: [freelancerId], references: [id], onDelete: Cascade)
+
+  @@unique([freelancerId, provider])
 }
 
 model Client {
