@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Save, RefreshCw, Mail, CheckCircle2 } from "lucide-react";
+import { Save, RefreshCw, Mail, CheckCircle2, Briefcase, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/utils/supabase/client";
 
@@ -62,6 +62,10 @@ export default function SettingsPage() {
   const [target, setTarget] = useState("1200");
   const [walkaway, setWalkaway] = useState("350");
 
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [updatingPw, setUpdatingPw] = useState(false);
+
   useEffect(() => {
     async function loadSettings() {
       const supabase = createClient();
@@ -86,6 +90,25 @@ export default function SettingsPage() {
     }
     loadSettings();
   }, []);
+
+  async function handleUpdatePassword() {
+    if (!newPassword || newPassword !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+    setUpdatingPw(true);
+    const supabase = createClient();
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Password updated successfully");
+      setNewPassword("");
+      setConfirmPassword("");
+    }
+    setUpdatingPw(false);
+  }
 
   async function handleSave() {
     setLoading(true);
@@ -115,6 +138,14 @@ export default function SettingsPage() {
 
   function connectGoogle() {
     window.location.href = "/api/auth/google";
+  }
+
+  function connectFiverr() {
+    toast.info("Fiverr OAuth is pending API approval. Using manual sync for now.");
+  }
+
+  function connectUpwork() {
+    toast.info("Upwork OAuth is pending API approval. Using manual sync for now.");
   }
 
   if (loading) return (
@@ -158,31 +189,78 @@ export default function SettingsPage() {
           
           {/* Integrations */}
           <Section title="Integrations" sub="Connect your external platforms to Pactix">
-            <div className="flex items-center justify-between p-4 border border-[var(--color-border)] bg-[var(--color-panel-2)]">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 flex items-center justify-center bg-[#EA4335]/10 text-[#EA4335]">
-                  <Mail className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold">Gmail</div>
-                  <div className="font-mono text-[10px] text-[var(--color-text-muted)]">
-                    {isGoogleConnected ? "Watching for new deals" : "Automate deal detection from your inbox"}
+            <div className="flex flex-col gap-3">
+              {/* Gmail */}
+              <div className="flex items-center justify-between p-4 border border-[var(--color-border)] bg-[var(--color-panel-2)]">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 flex items-center justify-center bg-[#EA4335]/10 text-[#EA4335]">
+                    <Mail className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold">Gmail</div>
+                    <div className="font-mono text-[10px] text-[var(--color-text-muted)]">
+                      {isGoogleConnected ? "Watching for new deals" : "Automate deal detection from your inbox"}
+                    </div>
                   </div>
                 </div>
+                {isGoogleConnected ? (
+                  <div className="flex items-center gap-2 text-green-600 font-mono text-[10px] uppercase font-bold">
+                    <CheckCircle2 className="w-4 h-4" /> Connected
+                  </div>
+                ) : (
+                  <button
+                    onClick={connectGoogle}
+                    className="px-4 py-2 bg-[var(--color-text)] color-[var(--color-bg)] text-xs font-bold hover:opacity-90 transition-opacity"
+                    style={{ color: "var(--color-bg)" }}
+                  >
+                    Connect
+                  </button>
+                )}
               </div>
-              {isGoogleConnected ? (
-                <div className="flex items-center gap-2 text-green-600 font-mono text-[10px] uppercase font-bold">
-                  <CheckCircle2 className="w-4 h-4" /> Connected
+
+              {/* Fiverr */}
+              <div className="flex items-center justify-between p-4 border border-[var(--color-border)] bg-[var(--color-panel-2)]">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 flex items-center justify-center bg-[#1dbf73]/10 text-[#1dbf73]">
+                    <Briefcase className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold">Fiverr</div>
+                    <div className="font-mono text-[10px] text-[var(--color-text-muted)]">
+                      Sync orders and messages automatically
+                    </div>
+                  </div>
                 </div>
-              ) : (
                 <button
-                  onClick={connectGoogle}
+                  onClick={connectFiverr}
                   className="px-4 py-2 bg-[var(--color-text)] color-[var(--color-bg)] text-xs font-bold hover:opacity-90 transition-opacity"
                   style={{ color: "var(--color-bg)" }}
                 >
                   Connect
                 </button>
-              )}
+              </div>
+
+              {/* Upwork */}
+              <div className="flex items-center justify-between p-4 border border-[var(--color-border)] bg-[var(--color-panel-2)]">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 flex items-center justify-center bg-[#14a800]/10 text-[#14a800]">
+                    <Globe className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold">Upwork</div>
+                    <div className="font-mono text-[10px] text-[var(--color-text-muted)]">
+                      Connect your RSS feed or profile for direct leads
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={connectUpwork}
+                  className="px-4 py-2 bg-[var(--color-text)] color-[var(--color-bg)] text-xs font-bold hover:opacity-90 transition-opacity"
+                  style={{ color: "var(--color-bg)" }}
+                >
+                  Connect
+                </button>
+              </div>
             </div>
           </Section>
 
@@ -218,6 +296,21 @@ export default function SettingsPage() {
             <p className="font-mono text-[10px] text-[var(--color-text-muted)]">
               Judge uses these as bounds. Override per-deal in the arena.
             </p>
+          </Section>
+
+          {/* Security */}
+          <Section title="Security" sub="Protect your account and deal data">
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="New password" value={newPassword} type="password" onChange={setNewPassword} />
+              <Field label="Confirm password" value={confirmPassword} type="password" onChange={setConfirmPassword} />
+            </div>
+            <button
+              onClick={handleUpdatePassword}
+              disabled={updatingPw}
+              className="self-start px-4 py-2 border border-[var(--color-text)] font-mono text-[10px] tracking-widest uppercase hover:bg-[var(--color-text)] hover:text-[var(--color-bg)] transition-all disabled:opacity-50"
+            >
+              {updatingPw ? "Updating..." : "Update password"}
+            </button>
           </Section>
 
           {/* Notifications */}
@@ -258,3 +351,4 @@ function Toggle({ defaultOn }: { defaultOn: boolean }) {
     </button>
   );
 }
+

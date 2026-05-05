@@ -35,13 +35,28 @@ const CLIENT_RESEARCH = {
   cachedAt: new Date().toISOString(),
 };
 
-export async function ensureFreelancerProfile(userId: string, email: string, name?: string) {
-  // Check if freelancer already exists
-  const existing = await prisma.freelancer.findUnique({
-    where: { id: userId },
-  });
+export async function ensureFreelancerProfile(userId: string | null, email: string, name?: string) {
+  // Check if freelancer already exists by ID
+  let existing = null;
+  if (userId) {
+    existing = await prisma.freelancer.findUnique({
+      where: { id: userId },
+    });
+  }
+
+  // If not found by ID, try by email
+  if (!existing && email) {
+    existing = await prisma.freelancer.findUnique({
+      where: { email: email },
+    });
+  }
 
   if (existing) return existing;
+
+  // If we only have email and no userId, don't create a new one (just a lookup)
+  if (!userId) return null;
+
+  // Create new freelancer with demo data
 
   // Create new freelancer with demo data
   const freelancerName = name || email.split("@")[0] || "New User";
