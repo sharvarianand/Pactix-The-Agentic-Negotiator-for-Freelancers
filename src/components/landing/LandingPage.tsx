@@ -9,64 +9,25 @@ import { ArenaPreview } from "./ArenaPreview";
 import { AgentRoll } from "./AgentRoll";
 import { Marquee } from "./Marquee";
 
-import { createClient } from "@/utils/supabase/client";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-
 export function LandingPage() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
-
-  async function handleDemo() {
-    setLoading(true);
-    const supabase = createClient();
-    
-    // Sign in anonymously
-    const { data, error } = await supabase.auth.signInAnonymously();
-
-    if (error) {
-      toast.error(error.message);
-      setLoading(false);
-      return;
-    }
-
-    if (data.user) {
-      toast.info("Preparing your demo workspace...");
-      // Seed the anonymous user with demo data
-      await fetch("/api/auth/sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: data.user.id,
-          email: data.user.email || `demo_${data.user.id.slice(0, 5)}@pactix.com`,
-          name: "Guest User",
-        }),
-      });
-      
-      toast.success("Welcome to the Demo!");
-      router.push("/dashboard");
-      router.refresh();
-    }
-  }
-
   return (
     <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)] overflow-x-hidden">
-      <Nav onDemo={handleDemo} loading={loading} />
-      <Hero onDemo={handleDemo} loading={loading} />
+      <Nav />
+      <Hero />
       <Marquee />
       <Manifesto />
       <ArenaPreview />
       <AgentRoll />
       <HowItWorks />
       <Stats />
-      <FinalCTA onDemo={handleDemo} loading={loading} />
-      <Footer onDemo={handleDemo} />
+      <FinalCTA />
+      <Footer />
     </div>
   );
 }
 
 /* ───────────── NAV ───────────── */
-function Nav({ onDemo, loading }: { onDemo: () => void; loading: boolean }) {
+function Nav() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-[var(--color-bg)] border-b border-[var(--color-border)]">
       <div className="mx-auto max-w-[1400px] px-6 h-14 flex items-center gap-6">
@@ -98,13 +59,12 @@ function Nav({ onDemo, loading }: { onDemo: () => void; loading: boolean }) {
           >
             Sign in
           </Link>
-          <button
-            onClick={onDemo}
-            disabled={loading}
-            className="btn-signal px-4 py-2 text-sm inline-flex items-center gap-1.5 font-semibold disabled:opacity-50"
+          <Link
+            href="/login"
+            className="btn-signal px-4 py-2 text-sm inline-flex items-center gap-1.5 font-semibold"
           >
-            {loading ? "Loading..." : "Open desk"} <ArrowUpRight className="w-3.5 h-3.5" />
-          </button>
+            Open desk <ArrowUpRight className="w-3.5 h-3.5" />
+          </Link>
         </div>
       </div>
     </header>
@@ -112,7 +72,7 @@ function Nav({ onDemo, loading }: { onDemo: () => void; loading: boolean }) {
 }
 
 /* ───────────── HERO ───────────── */
-function Hero({ onDemo, loading }: { onDemo: () => void; loading: boolean }) {
+function Hero() {
   return (
     <section className="relative pt-28 pb-0 overflow-hidden">
       {/* Subtle dot-grid texture */}
@@ -211,13 +171,12 @@ function Hero({ onDemo, loading }: { onDemo: () => void; loading: boolean }) {
           className="mt-12 pb-16 flex flex-col sm:flex-row items-start sm:items-center gap-6 border-t border-[var(--color-border)] pt-10"
         >
           <div className="flex items-center gap-3">
-            <button
-              onClick={onDemo}
-              disabled={loading}
-              className="btn-signal px-6 py-3.5 text-base inline-flex items-center gap-2 font-semibold disabled:opacity-50"
+            <Link
+              href="/login?demo=true"
+              className="btn-signal px-6 py-3.5 text-base inline-flex items-center gap-2 font-semibold"
             >
-              {loading ? "Preparing desk..." : "Run the demo"} <ArrowRight className="w-4 h-4" />
-            </button>
+              Run the demo <ArrowRight className="w-4 h-4" />
+            </Link>
             <Link
               href="/signup"
               className="btn-ghost px-6 py-3.5 text-base inline-flex items-center gap-2"
@@ -558,7 +517,7 @@ function Stats() {
 }
 
 /* ───────────── FINAL CTA ───────────── */
-function FinalCTA({ onDemo, loading }: { onDemo: () => void; loading: boolean }) {
+function FinalCTA() {
   return (
     <section className="border-t border-[var(--color-border)]">
       <div className="mx-auto max-w-[1400px] px-6 py-32 grid grid-cols-12 gap-6 items-end">
@@ -577,14 +536,13 @@ function FinalCTA({ onDemo, loading }: { onDemo: () => void; loading: boolean })
           </h2>
         </div>
         <div className="col-span-12 lg:col-span-4 flex flex-col items-start lg:items-end gap-4 pb-2">
-          <button
-            onClick={onDemo}
-            disabled={loading}
-            className="btn-signal px-7 py-4 text-base inline-flex items-center gap-2.5 font-semibold w-full lg:w-auto justify-center disabled:opacity-50"
+          <Link
+            href="/login"
+            className="btn-signal px-7 py-4 text-base inline-flex items-center gap-2.5 font-semibold w-full lg:w-auto justify-center"
           >
             <Zap className="w-4 h-4" />
-            {loading ? "Waking up agents..." : "Open the deal desk"}
-          </button>
+            Open the deal desk
+          </Link>
           <div className="font-mono text-[10px] tracking-widest uppercase text-[var(--color-text-muted)]">
             Demo data preloaded · No setup
           </div>
@@ -595,7 +553,7 @@ function FinalCTA({ onDemo, loading }: { onDemo: () => void; loading: boolean })
 }
 
 /* ───────────── FOOTER ───────────── */
-function Footer({ onDemo }: { onDemo: () => void }) {
+function Footer() {
   return (
     <footer className="border-t border-[var(--color-border)] bg-[var(--color-panel)]">
       {/* main footer row */}
@@ -625,7 +583,7 @@ function Footer({ onDemo }: { onDemo: () => void }) {
           <div className="font-mono text-[10px] tracking-widest uppercase text-[var(--color-text-muted)] mb-4">Access</div>
           <div className="flex flex-col gap-2.5">
             <Link href="/login" className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors">Sign in</Link>
-            <button onClick={onDemo} className="text-left text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors">Run demo</button>
+            <Link href="/login?demo=true" className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors">Run demo</Link>
           </div>
         </div>
 
