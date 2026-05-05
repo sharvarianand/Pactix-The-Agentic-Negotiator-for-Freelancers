@@ -595,7 +595,7 @@ function FinalCTA({ onDemo, loading }: { onDemo: () => void; loading: boolean })
 }
 
 /* ───────────── FOOTER ───────────── */
-function Footer() {
+function Footer({ onDemo }: { onDemo: () => void }) {
   return (
     <footer className="border-t border-[var(--color-border)] bg-[var(--color-panel)]">
       {/* main footer row */}
