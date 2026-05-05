@@ -287,7 +287,7 @@ async function* streamOpenRouter(
   start: number
 ): AsyncGenerator<LLMStreamChunk, void, void> {
   const apiKey = process.env.OPENROUTER_API_KEY;
-  const model = process.env.OPENROUTER_MODEL || "meta-llama/llama-3-8b-instruct:free";
+  const model = process.env.OPENROUTER_MODEL || "meta-llama/llama-3.1-8b-instruct:free";
   if (!apiKey) {
     yield* streamMock(req, start);
     return;
