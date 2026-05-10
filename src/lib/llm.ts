@@ -148,31 +148,31 @@ export async function* streamJSON(
   const provider = currentProvider();
   const start = Date.now();
 
-  // If the primary provider is gemini, we allow fallback to openrouter
-  if (provider === "gemini") {
+  // If the primary provider is openrouter, we allow fallback to gemini
+  if (provider === "openrouter") {
     let success = false;
     try {
-      for await (const chunk of streamGemini(req, start)) {
+      for await (const chunk of streamOpenRouter(req, start)) {
         if (chunk.type === "error") {
           // If we hit an error before any reasoning/data, we can try falling back
-          console.error("Gemini failed, checking for fallback...", chunk.error);
+          console.error("OpenRouter failed, checking for fallback...", chunk.error);
           break; 
         }
         success = true;
         yield chunk;
       }
     } catch (e) {
-      console.error("Gemini stream threw error, checking for fallback...", e);
+      console.error("OpenRouter stream threw error, checking for fallback...", e);
     }
 
-    if (!success && process.env.OPENROUTER_API_KEY) {
-      console.log("Falling back to OpenRouter...");
-      yield* streamOpenRouter(req, start);
+    if (!success && resolveGeminiApiKey()) {
+      console.log("Falling back to Gemini...");
+      yield* streamGemini(req, start);
       return;
     } else if (!success) {
       yield {
         type: "error",
-        error: "Gemini failed and no fallback (OpenRouter) configured.",
+        error: "OpenRouter failed and no fallback (Gemini) configured.",
         latencyMs: Date.now() - start,
       };
       return;
@@ -183,11 +183,11 @@ export async function* streamJSON(
   // Non-fallback paths
   try {
     switch (provider) {
+      case "gemini":
+        yield* streamGemini(req, start);
+        break;
       case "openai":
         yield* streamOpenAI(req, start);
-        break;
-      case "openrouter":
-        yield* streamOpenRouter(req, start);
         break;
       case "ernie":
         yield* streamErnie(req, start);
