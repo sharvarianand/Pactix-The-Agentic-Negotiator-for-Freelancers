@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import "./globals.css";
 
 import { CustomCursor } from "@/components/shell/CustomCursor";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -53,6 +54,7 @@ export default function RootLayout({
             },
           }}
         />
+        <Analytics />
       </body>
     </html>
   );
