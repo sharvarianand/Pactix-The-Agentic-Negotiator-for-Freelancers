@@ -19,6 +19,7 @@ export function ApproveClosingModal() {
     ?.invoices.find((i) => i.id === closingResult?.invoiceId);
 
   const [polling, setPolling] = useState(false);
+  const [celebratedFor, setCelebratedFor] = useState<string | null>(null);
 
   // Poll the invoice status every 3s while modal is open and not paid
   useEffect(() => {
@@ -31,6 +32,18 @@ export function ApproveClosingModal() {
     }, 3000);
     return () => clearInterval(interval);
   }, [open, invoice]);
+
+  // Auto-celebrate when polling detects a real payment
+  useEffect(() => {
+    if (!invoice || invoice.status !== "paid") return;
+    if (celebratedFor === invoice.id) return;
+    setCelebratedFor(invoice.id);
+    (async () => {
+      const { celebratePayment } = await import("@/lib/celebrate");
+      celebratePayment();
+      toast.success("Deposit received — payment confirmed by Stripe");
+    })();
+  }, [invoice, celebratedFor]);
 
   if (!open || !closingResult) return null;
 
@@ -94,14 +107,26 @@ export function ApproveClosingModal() {
                     <div className="text-xs text-[var(--color-text-muted)] mt-1">
                       50% deposit · {invoice.kind}
                     </div>
-                    <a
-                      href={invoice.stripePaymentLink}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-3 inline-block text-xs text-[var(--color-accent)] underline underline-offset-2 break-all"
-                    >
+                    {invoice.status === "paid" ? (
+                      <div className="mt-3 inline-flex items-center gap-2 px-3 py-2 bg-[var(--color-accept)]/15 text-[var(--color-accept)] font-mono text-[10px] uppercase tracking-widest">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        Paid · settled by Stripe
+                      </div>
+                    ) : (
+                      <a
+                        href={invoice.stripePaymentLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-3 inline-flex items-center gap-2 px-4 py-2.5 bg-[#635bff] text-white font-semibold text-sm hover:opacity-90 transition-opacity"
+                      >
+                        <CreditCard className="w-4 h-4" />
+                        Pay {formatCurrency(invoice.amount)} via Stripe
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
+                    <div className="mt-2 font-mono text-[9px] text-[var(--color-text-dim)] truncate">
                       {invoice.stripePaymentLink}
-                    </a>
+                    </div>
                   </>
                 ) : (
                   <div className="text-xs text-[var(--color-text-dim)]">
