@@ -54,6 +54,7 @@ model Deal {
   agreedAmount   Float?
   scope          String?
   winProbability Float?
+  gmailThreadId  String?
   createdAt      DateTime     @default(now())
   closedAt       DateTime?
   agentTraces    AgentTrace[]
@@ -65,18 +66,23 @@ model Deal {
 
   @@index([status])
   @@index([freelancerId])
+  @@index([gmailThreadId])
 }
 
 model Message {
-  id             String   @id @default(cuid())
-  dealId         String
-  direction      String
-  body           String
-  sentAt         DateTime @default(now())
-  approvedByUser Boolean  @default(false)
-  deal           Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  id              String   @id @default(cuid())
+  dealId          String
+  direction       String
+  body            String
+  subject         String?
+  sentAt          DateTime @default(now())
+  approvedByUser  Boolean  @default(false)
+  gmailMessageId  String?  @unique
+  gmailThreadId   String?
+  deal            Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
 
   @@index([dealId])
+  @@index([gmailThreadId])
 }
 
 model AgentTrace {

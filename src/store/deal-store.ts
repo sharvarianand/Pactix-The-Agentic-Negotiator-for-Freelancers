@@ -119,7 +119,7 @@ interface State {
   loadDeals: () => Promise<void>;
   selectDeal: (id: string) => void;
   dispatchCouncil: (dealId: string) => Promise<void>;
-  approveReply: (dealId: string, body: string) => Promise<void>;
+  approveReply: (dealId: string, body: string) => Promise<{ sentViaGmail: boolean; error?: string }>;
   simulateClientReply: (dealId: string) => Promise<void>;
   closeDeal: (dealId: string) => Promise<void>;
   markInvoicePaid: (invoiceId: string) => Promise<void>;
@@ -229,15 +229,22 @@ export const useDealStore = create<State>((set, get) => ({
     }));
 
     try {
-      await fetch(`/api/deals/${dealId}/approve-reply`, {
+      const res = await fetch(`/api/deals/${dealId}/approve-reply`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ body }),
       });
+      const data = (await res.json()) as {
+        gmail?: { sent: boolean; error?: string };
+      };
       await get().loadDeals();
+      return {
+        sentViaGmail: data.gmail?.sent ?? false,
+        error: data.gmail?.error,
+      };
     } catch (err) {
       console.error("Failed to approve reply:", err);
-      // Revert if needed (though usually fine)
+      return { sentViaGmail: false, error: String(err) };
     }
   },
 

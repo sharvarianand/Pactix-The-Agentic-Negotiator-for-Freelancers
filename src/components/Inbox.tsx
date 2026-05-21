@@ -82,14 +82,43 @@ export function Inbox() {
 
   async function handleSync() {
     setSyncing(true);
-    const id = toast.loading("Scanning Gmail...");
+    const id = toast.loading("Scanning Gmail…");
     try {
       const res = await fetch("/api/sync/gmail", { method: "POST" });
-      if (!res.ok) throw new Error("Sync failed");
+      const data = (await res.json()) as {
+        success?: boolean;
+        scanned?: number;
+        newDeals?: number;
+        newMessages?: number;
+        skipped?: number;
+        errors?: string[];
+        error?: string;
+        detail?: string;
+      };
+
+      if (!res.ok || !data.success) {
+        toast.error(data.error || "Sync failed", {
+          id,
+          description: data.detail || "Connect Gmail in Settings first",
+        });
+        return;
+      }
+
       await loadDeals();
-      toast.success("Inbox up to date", { id });
-    } catch (e) {
-      toast.error("Connect Gmail in settings first", { id });
+      const newDeals = data.newDeals ?? 0;
+      const newMsgs = data.newMessages ?? 0;
+      const scanned = data.scanned ?? 0;
+
+      if (newDeals === 0 && newMsgs === 0) {
+        toast.success(`Inbox up to date · scanned ${scanned}`, { id });
+      } else {
+        toast.success(
+          `${newDeals} new deal${newDeals === 1 ? "" : "s"}, ${newMsgs} new message${newMsgs === 1 ? "" : "s"}`,
+          { id, description: `Scanned ${scanned} email${scanned === 1 ? "" : "s"}` }
+        );
+      }
+    } catch {
+      toast.error("Sync failed — check connection", { id });
     } finally {
       setSyncing(false);
     }

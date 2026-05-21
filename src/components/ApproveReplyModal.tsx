@@ -384,8 +384,16 @@ export function ApproveReplyModal() {
               onClick={async () => {
                 setSending(true);
                 try {
-                  await approveReply(selectedDealId, text);
-                  toast.success("Reply sent via Pactix");
+                  const r = await approveReply(selectedDealId, text);
+                  if (r.sentViaGmail) {
+                    toast.success("Reply sent via Gmail");
+                  } else if (r.error && r.error !== "Not a Gmail-sourced deal") {
+                    toast.error("Reply saved but Gmail send failed", {
+                      description: r.error,
+                    });
+                  } else {
+                    toast.success("Reply approved");
+                  }
                 } finally {
                   setSending(false);
                 }

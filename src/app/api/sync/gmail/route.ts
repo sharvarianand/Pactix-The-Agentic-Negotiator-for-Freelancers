@@ -11,11 +11,17 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await syncGmailForUser(user.id);
+    const result = await syncGmailForUser(user.id);
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, ...result });
   } catch (error) {
     console.error("Manual Sync Error:", error);
-    return NextResponse.json({ error: "Sync failed" }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: "Sync failed",
+        detail: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
   }
 }
