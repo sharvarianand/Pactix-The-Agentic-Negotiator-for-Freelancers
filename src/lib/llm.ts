@@ -117,24 +117,91 @@ function stripFences(s: string): string {
 }
 
 /**
- * Best-effort JSON extraction: find the first {...} block in the string.
- * Handles models that return prose before the JSON.
+ * Escape control characters (U+0000–U+001F) that appear inside JSON string
+ * values. Uses a minimal state machine so structural whitespace is untouched.
+ * This repairs the most common Gemini failure: literal newlines inside strings.
+ */
+function sanitizeJSONControlChars(s: string): string {
+  const CTRL_ESCAPE: Record<number, string> = {
+    8: "\\b",
+    9: "\\t",
+    10: "\\n",
+    12: "\\f",
+    13: "\\r",
+  };
+
+  let out = "";
+  let inStr = false;
+  let esc = false;
+
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    const code = s.charCodeAt(i);
+
+    if (esc) {
+      out += ch;
+      esc = false;
+      continue;
+    }
+
+    if (ch === "\\" && inStr) {
+      out += ch;
+      esc = true;
+      continue;
+    }
+
+    if (ch === '"') {
+      inStr = !inStr;
+      out += ch;
+      continue;
+    }
+
+    if (inStr && code < 0x20) {
+      out += CTRL_ESCAPE[code] ?? `\\u${code.toString(16).padStart(4, "0")}`;
+      continue;
+    }
+
+    out += ch;
+  }
+
+  return out;
+}
+
+/**
+ * Best-effort JSON extraction: find the first {...} block in the string,
+ * sanitize control characters inside strings, then parse.
+ * Handles models that return prose before/around the JSON object.
  */
 function extractJSON(raw: string): string {
   const stripped = stripFences(raw);
-  // Quick path: already valid
+
+  // Helper: sanitize then try parse; throws on failure
+  function tryParse(s: string): string {
+    const clean = sanitizeJSONControlChars(s);
+    JSON.parse(clean); // throws if still invalid
+    return clean;
+  }
+
+  // Quick path: already valid (or valid after control-char sanitization)
   try {
-    JSON.parse(stripped);
-    return stripped;
+    return tryParse(stripped);
   } catch {
     /* fall through */
   }
+
+  // Slice between first '{' and last '}'
   const first = stripped.indexOf("{");
   const last = stripped.lastIndexOf("}");
   if (first >= 0 && last > first) {
-    return stripped.slice(first, last + 1);
+    try {
+      return tryParse(stripped.slice(first, last + 1));
+    } catch {
+      /* fall through */
+    }
   }
-  return stripped;
+
+  // Last resort: return sanitized string and let caller surface the error
+  return sanitizeJSONControlChars(stripped);
 }
 
 /**
